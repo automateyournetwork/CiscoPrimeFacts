@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+<title>Markmap</title>
+<style>
+* {
+  margin: 0;
+  padding: 0;
+}
+#mindmap {
+  display: block;
+  width: 100vw;
+  height: 100vh;
+}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/d3@5"></script><script src="https://cdn.jsdelivr.net/npm/markmap-lib@0.6.1/dist/view.min.js"></script>
+</head>
+<body>
+<svg id="mindmap"></svg>
+<script>markmap.markmap('svg#mindmap',{"t":"heading","d":1,"v":"Cisco Prime Devices","c":[{"t":"thead","d":2,"v":"","c":[{"t":"th","d":3,"v":"Weekday"},{"t":"th","d":3,"v":"Date"},{"t":"th","d":3,"v":"Hostname"},{"t":"th","d":3,"v":"IP Address"},{"t":"th","d":3,"v":"Managed"},{"t":"th","d":3,"v":"Last Collection"},{"t":"th","d":3,"v":"Collection Status"},{"t":"th","d":3,"v":"Collection Time"},{"t":"th","d":3,"v":"Device Type"},{"t":"th","d":3,"v":"Location"},{"t":"th","d":3,"v":"Management Status"},{"t":"th","d":3,"v":"Part Number"},{"t":"th","d":3,"v":"Product Family"},{"t":"th","d":3,"v":"Reachability"},{"t":"th","d":3,"v":"Software Type"},{"t":"th","d":3,"v":"Software Version"}]},{"t":"tbody","d":2,"v":"","c":[{"t":"td","d":3,"v":"Fri"},{"t":"td","d":3,"v":"31 Jul 2020 21:56:46 GMT"},{"t":"td","d":3,"v":"HOSTNAME.MY.DOMAIN.COM"},{"t":"td","d":3,"v":"192.168.1.100"},{"t":"td","d":3,"v":"MANAGED"},{"t":"td","d":3,"v":"SUCCESS"},{"t":"td","d":3,"v":"COMPLETED"},{"t":"td","d":3,"v":"2020-07-31T02:01:57.636Z"},{"t":"td","d":3,"v":"Device Type"},{"t":"td","d":3,"v":"Location"},{"t":"td","d":3,"v":"MANAGED_AND_SYNCHRONIZED"},{"t":"td","d":3,"v":""},{"t":"td","d":3,"v":"Switches and Hubs"},{"t":"td","d":3,"v":"REACHABLE"},{"t":"td","d":3,"v":"IOS"},{"t":"td","d":3,"v":"IOS Version"}]}]}).fit()</script>
+</body>
+</html>

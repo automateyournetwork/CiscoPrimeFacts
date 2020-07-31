@@ -1,0 +1,16 @@
+---
+
+# Network provider:
+ansible_connection: network_cli
+ansible_network_os: ios
+ansible_user: admin
+ansible_ssh_pass: "{{ hostvars[inventory_hostname]['ios_password'] | default('') }}"
+
+enterprise_defaults:
+  servers:
+    prime: 
+      username: admin
+      api_user: apiuser
+      api_base_url: "https://x.x.x.x/webacs/api/"
+      protocol: https
+      address: x.x.x.x

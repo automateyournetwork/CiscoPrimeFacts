@@ -1,0 +1,66 @@
+{
+    "cache_control":,
+    "changed":,
+    "connection":,
+    "content":,
+    "content_length":,
+    "content_type":,
+    "cookies": {
+        "JSESSIONID":
+    },
+    "cookies_string":,
+    "date":,
+    "elapsed":,
+    "expires":,
+    "failed":,
+    "json": {
+        "queryResponse": {
+            "@domain":,
+            "@requestUrl":,
+            "@responseType":,
+            "@rootUrl":,
+            "@type":,
+            "entity": [
+                {
+                    "@dtoType":,
+                    "@type":,
+                    "@url":,
+                    "devicesDTO": {
+                        "@displayName":,
+                        "@id":,
+                        "adminStatus":,
+                        "collectionDetail":,
+                        "collectionStatus":,
+                        "collectionTime":,
+                        "creationTime":,
+                        "deviceId":,
+                        "deviceName":,
+                        "deviceType":,
+                        "ipAddress":,
+                        "location":,
+                        "managementStatus":,
+                        "manufacturerPartNrs": {
+                            "manufacturerPartNr": [
+                                {
+                                    "partNumber":
+                                }
+                            ]
+                        },
+                        "productFamily":,
+                        "reachability":,
+                        "softwareType":,
+                        "softwareVersion":
+                    }
+                }
+            ]
+        }
+    },
+    "msg":,
+    "redirected":,
+    "server":,
+    "set_cookie":,
+    "status":,
+    "url":,
+    "x_frame_options":,
+    "x_nbi_time":
+}
