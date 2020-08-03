@@ -54,7 +54,7 @@
       copy: 
         content: | 
           {% for host in ansible_play_hosts %}
-          {{ hostname[host].device_info | to_nice_json }}
+          {{ hostvars[host].device_info | to_nice_json }}
           {% endfor %}
         dest: ../documentation/PRIME/json/prime_device_facts.json       
       delegate_to: localhost
@@ -65,7 +65,7 @@
       copy: 
         content: | 
           {% for host in ansible_play_hosts %}
-          {{ hostname[host].device_info | to_nice_yaml }}
+          {{ hostvars[host].device_info | to_nice_yaml }}
           {% endfor %}
         dest: ../documentation/PRIME/yaml/prime_device_facts.yml
       delegate_to: localhost
