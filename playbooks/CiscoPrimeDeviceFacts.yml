@@ -165,15 +165,6 @@
       run_once: true 
       
 # Format Markdown #
-    - name: Format Markdown File New Lines
-      replace:
-        path: ../documentation/PRIME/markdown/prime_device_facts.md
-        regexp: '],'
-        replace: ']\n'
-      delegate_to: localhost
-      run_once: true 
-
-# Format Markdown #
     - name: Format Markdown File Clean Up
       replace:
         path: ../documentation/PRIME/markdown/prime_device_facts.md
