@@ -2,6 +2,8 @@
 
 A repository for Cisco Prime Device Facts Ansible playbooks using the Cisco Prime API
 
+[![published](https://static.production.devnetcloud.com/codeexchange/assets/images/devnet-published.svg)](https://developer.cisco.com/codeexchange/github/repo/automateyournetwork/CiscoPrimeFacts)
+
 ## Written by John Capobianco, Francois Daigle, and Devin Sloan
 
 ## Instructions for Linux users
