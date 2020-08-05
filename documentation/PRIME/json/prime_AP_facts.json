@@ -1,0 +1,157 @@
+{
+    "changed":,
+    "msg":,
+    "results": [
+        {
+            "ansible_loop_var":,
+            "cache_control":,
+            "changed":,
+            "connection":,
+            "content":,
+            "content_length":,
+            "content_type":,
+            "cookies": {
+                "JSESSIONID":
+            },
+            "cookies_string":,
+            "date":,
+            "elapsed":,
+            "expires":,
+            "failed":,
+            "invocation": {
+                "module_args": {
+                    "attributes":,
+                    "backup":,
+                    "body":,
+                    "body_format":,
+                    "client_cert":,
+                    "client_key":,
+                    "content":,
+                    "creates":,
+                    "delimiter":,
+                    "dest":,
+                    "directory_mode":,
+                    "follow":,
+                    "follow_redirects":,
+                    "force":,
+                    "force_basic_auth":,
+                    "group":,
+                    "headers":,
+                    "http_agent":,
+                    "method":,
+                    "mode":,
+                    "owner":,
+                    "password":,
+                    "regexp":,
+                    "remote_src":,
+                    "removes":,
+                    "return_content":,
+                    "selevel":,
+                    "serole":,
+                    "setype":,
+                    "seuser":,
+                    "src":,
+                    "status_code": [
+                        
+                    ],
+                    "timeout":,
+                    "unix_socket":,
+                    "unsafe_writes":,
+                    "url":,
+                    "url_password":,
+                    "url_username":,
+                    "use_proxy":,
+                    "user":,
+                    "validate_certs":
+                }
+            },
+            "item": {
+                "entityId":
+            },
+            "json": {
+                "queryResponse": {
+                    "@requestUrl":,
+                    "@responseType":,
+                    "@rootUrl":,
+                    "@type":,
+                    "entity": [
+                        {
+                            "@dtoType":,
+                            "@type":,
+                            "@url":,
+                            "accessPointDetailsDTO": {
+                                "@displayName":,
+                                "@id":,
+                                "adminStatus":,
+                                "apType":,
+                                "cdpNeighbors": {
+                                    "cdpNeighbor": {
+                                        "capabilities":,
+                                        "duplex":,
+                                        "interfaceSpeed":,
+                                        "localPort":,
+                                        "neighborIpAddress":,
+                                        "neighborName":,
+                                        "neighborPort":,
+                                        "platform":
+                                    }
+                                },
+                                "clientCount":,
+                                "clientCount_2_4GHz":,
+                                "clientCount_5GHz":,
+                                "ethernetMac":,
+                                "ipAddress":,
+                                "locationHeirarchy":,
+                                "macAddress":,
+                                "mapLocation":,
+                                "model":,
+                                "name":,
+                                "reachabilityStatus":,
+                                "serialNumber":,
+                                "softwareVersion":,
+                                "status":,
+                                "type":,
+                                "unifiedApInfo": {
+                                    "WIPSEnabled":,
+                                    "apCertType":,
+                                    "apGroupName":,
+                                    "apMode":,
+                                    "apStaticEnabled":,
+                                    "bootVersion":,
+                                    "capwapJoinTakenTime":,
+                                    "contryCode":,
+                                    "encryptionEnabled":,
+                                    "flexConnectMode":,
+                                    "iosVersion":,
+                                    "linkLatencyEnabled":,
+                                    "maintenanceMode":,
+                                    "poeStatus":,
+                                    "poeStatusEnum":,
+                                    "portNumber":,
+                                    "powerInjectorState":,
+                                    "preStandardState":,
+                                    "rogueDetectionEnabled":,
+                                    "sshEnabled":,
+                                    "statisticsTimer":,
+                                    "telnetEnabled":,
+                                    "vlanEnabled":,
+                                    "vlanNativeId":,
+                                    "wlanProfiles":,
+                                    "wlanVlanMappings":
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
+            "msg":,
+            "redirected":,
+            "server":,
+            "set_cookie":,
+            "status":,
+            "url":,
+            "x_frame_options":,
+            "x_nbi_time":
+        }
+    ]
+}

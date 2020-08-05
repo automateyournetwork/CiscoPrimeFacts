@@ -7,6 +7,10 @@ CORE
 DIST
 ACCESS
 
+[ACCESS_WAN:children]
+ACCESS
+WAN
+
 [CORE]
 coreswitch.my.domain.com
 
