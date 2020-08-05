@@ -23,12 +23,15 @@ $ sudo yum -y update
 2. Install Ansible
 
 $ sudo yum install epel-release
+
 $ sudo yum install ansible
 
 3. Install node.js 12
 
 $ curl -sL https://rpm.nodesource.com/setup_12.x | sudo bash -
+
 $ sudo yum install -y gcc-c++ make
+
 $ sudo yum install -y nodejs
 
 4. Install Mark Map
@@ -40,6 +43,7 @@ $ npm install markmap-lib -g
 1. Update Ubuntu - this step will take some time. 
 
 $ sudo apt update
+
 $ sudo apt-get upgrade -y
 
 2. Make sure Python is installed.
@@ -49,7 +53,9 @@ $ sudo apt-get install python -y
 3. Install Ansible.
 
 $ sudo apt-add-repository ppa:ansible/ansible
+
 $ sudo apt-get update
+
 $ sudo apt-get install ansible -y
 
 4. Install node.js
@@ -108,6 +114,7 @@ Aside from this requirement, the Linux prequisites similarly apply to Windows 10
 12. Update Ubuntu - this step will take some time.
 
 $ sudo apt update
+
 $ sudo apt-get upgrade -y
 
 13. Make sure Python is installed.
@@ -117,7 +124,9 @@ $ sudo apt-get install python -y
 14. Install Ansible.
 
 $ sudo apt-add-repository ppa:ansible/ansible
+
 $ sudo apt-get update
+
 $ sudo apt-get install ansible -y
 
 15. Install node.js.
@@ -141,6 +150,7 @@ chmod -R 755 /home/"username"/CiscoPrimeFacts
 To work around a bug that prevents the Ansible playbook from running on certain versions of Ubuntu please run the following:
 
 sudo mv /usr/bin/sleep /usr/bin/sleep.dist
+
 sudo ln -s /bin/true /usr/bin/sleep
 
 ## Prepare your environment
@@ -149,7 +159,7 @@ sudo ln -s /bin/true /usr/bin/sleep
 
 Enable Read access for a Prime User
 
-![image](./images/EnableNBI.png)
+![image](./images/EnableNBI.PNG)
 
 ### Modify the group_vars\ENTERPRISE.yml
 
