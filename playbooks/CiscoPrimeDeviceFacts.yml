@@ -1,6 +1,6 @@
 ---
 
-- hosts: ENTERPRISE
+- hosts: CAMPUS_WAN
 # Prompt for Username and Password #
   vars_prompt:  
     - name: Prime_Password_Prompt
@@ -12,220 +12,448 @@
         prime_password: "{{ Prime_Password_Prompt }}"        
       no_log: true
       delegate_to: localhost
-      run_once: true 
 
+# When No Limit on Playbook
+
+    - name: Playbook Not Limited Update Master Report
+      block: 
 # Get Device ID from Hostname # 
-    - name: GET Device Entity ID's
-      uri:
-        url: "{{ enterprise_defaults.servers.prime.protocol }}://{{ enterprise_defaults.servers.prime.address }}/webacs/api/v4/data/Devices.json?deviceName={{ inventory_hostname }}.{{ enterprise_defaults.domain }}"
-        user: "{{ enterprise_defaults.servers.prime.api_user }}"
-        password: "{{ prime_password }}"
-        method: GET
-        return_content: yes
-        validate_certs: no
-        force_basic_auth: yes
-        follow_redirects: all
-        body_format: json
-      register: device_id
-      delegate_to: localhost
+        - name: GET Device Entity ID's
+          uri:
+            url: "{{ enterprise_defaults.servers.prime.protocol }}://{{ enterprise_defaults.servers.prime.address }}/webacs/api/v4/data/Devices.json?deviceName={{ inventory_hostname }}.{{ enterprise_defaults.domain }}"
+            user: "{{ enterprise_defaults.servers.prime.api_user }}"
+            password: "{{ prime_password }}"
+            method: GET
+            return_content: yes
+            validate_certs: no
+            force_basic_auth: yes
+            follow_redirects: all
+            body_format: json
+          register: device_id
+          delegate_to: localhost
     
 # Set Device Fact # 
-    - name: Set Device Fact
-      set_fact:
-        device_entity: "{{ device_id.json.queryResponse.entityId[0]['$'] }}"
+        - name: Set Device Fact
+          set_fact:
+            device_entity: "{{ device_id.json.queryResponse.entityId[0]['$'] }}"
 
 # Get Device Info using matching ID #
-    - name: GET Device Info Using Entity ID
-      uri:
-        url: "{{ enterprise_defaults.servers.prime.protocol }}://{{ enterprise_defaults.servers.prime.address }}/webacs/api/v4/data/Devices/{{device_entity}}.json"
-        user: "{{ enterprise_defaults.servers.prime.api_user }}"
-        password: "{{ prime_password }}"
-        method: GET
-        return_content: yes
-        validate_certs: no
-        force_basic_auth: yes
-        follow_redirects: all
-        body_format: json
-      register: device_info
-      delegate_to: localhost
+        - name: GET Device Info Using Entity ID
+          uri:
+            url: "{{ enterprise_defaults.servers.prime.protocol }}://{{ enterprise_defaults.servers.prime.address }}/webacs/api/v4/data/Devices/{{ device_entity }}.json"
+            user: "{{ enterprise_defaults.servers.prime.api_user }}"
+            password: "{{ prime_password }}"
+            method: GET
+            return_content: yes
+            validate_certs: no
+            force_basic_auth: yes
+            follow_redirects: all
+            body_format: json
+          register: device_info
+          delegate_to: localhost
 
 # Create JSON file with Ansible Facts #
-    - name: Create raw JSON file
-      copy: 
-        content: | 
-          {% for host in ansible_play_hosts %}
-          {{ hostvars[host].device_info | to_nice_json }}
-          {% endfor %}
-        dest: ../documentation/PRIME/json/prime_device_facts.json       
-      delegate_to: localhost
-      run_once: true 
+        - name: Create raw JSON file
+          copy: 
+            content: | 
+              {% for host in ansible_play_hosts %}
+              {{ hostvars[host].device_info | to_nice_json }}
+              {% endfor %}
+            dest: ../documentation/PRIME/json/prime_device_facts.json       
+          delegate_to: localhost
+          run_once: true 
 
 # Create YAML file with Ansible Facts #
-    - name: Create raw YAML
-      copy: 
-        content: | 
-          {% for host in ansible_play_hosts %}
-          {{ hostvars[host].device_info | to_nice_yaml }}
-          {% endfor %}
-        dest: ../documentation/PRIME/yaml/prime_device_facts.yml
-      delegate_to: localhost
-      run_once: true
+        - name: Create raw YAML
+          copy: 
+            content: | 
+              {% for host in ansible_play_hosts %}
+              {{ hostvars[host].device_info | to_nice_yaml }}
+              {% endfor %}
+            dest: ../documentation/PRIME/yaml/prime_device_facts.yml
+          delegate_to: localhost
+          run_once: true
 
 # Add Headers to YAML #
-    - name: Header Row
-      lineinfile:
-        path: ../documentation/PRIME/yaml/prime_device_facts.yml
-        insertbefore: BOF
-        line: ---        
-      delegate_to: localhost
+        - name: Header Row
+          lineinfile:
+            path: ../documentation/PRIME/yaml/prime_device_facts.yml
+            insertbefore: BOF
+            line: ---        
+          delegate_to: localhost
 
 # Set Facts #
-    - set_fact:
-        date: "{{ device_info['date'] }}"
-        deviceName: "{{ device_info | json_query('json.queryResponse.entity[*].devicesDTO.deviceName') }}"
-        ipAddress: "{{ device_info | json_query('json.queryResponse.entity[*].devicesDTO.ipAddress') }}"
-        managed: "{{ device_info | json_query('json.queryResponse.entity[*].devicesDTO.adminStatus') }}"
-        lastCollection: "{{ device_info | json_query('json.queryResponse.entity[*].devicesDTO.collectionDetail') }}"
-        collectionStatus: "{{ device_info | json_query('json.queryResponse.entity[*].devicesDTO.collectionStatus') }}"
-        collectionTime: "{{ device_info | json_query('json.queryResponse.entity[*].devicesDTO.collectionTime') }}"
-        creationTime: "{{ device_info | json_query('json.queryResponse.entity[*].devicesDTO.creationTime') }}"        
-        deviceType: "{{ device_info | json_query('json.queryResponse.entity[*].devicesDTO.deviceType') }}"
-        location: "{{ device_info | json_query('json.queryResponse.entity[*].devicesDTO.location') }}"
-        managementStatus: "{{ device_info | json_query('json.queryResponse.entity[*].devicesDTO.managementStatus') }}" 
-        partNumber: "{{ device_info | json_query('json.queryResponse.entity[*].devicesDTO.manufacturerPartNrs.manufacturerPartNr.partNumber') }}"        
-        productFamily: "{{ device_info | json_query('json.queryResponse.entity[*].devicesDTO.productFamily') }}"        
-        reachability: "{{ device_info | json_query('json.queryResponse.entity[*].devicesDTO.reachability') }}"        
-        softwareType: "{{ device_info | json_query('json.queryResponse.entity[*].devicesDTO.softwareType') }}" 
-        softwareVersion: "{{ device_info | json_query('json.queryResponse.entity[*].devicesDTO.softwareVersion') }}"        
+        - set_fact:
+            date: "{{ device_info['date'] }}"
+            deviceName: "{{ device_info | json_query('json.queryResponse.entity[*].devicesDTO.deviceName') }}"
+            ipAddress: "{{ device_info | json_query('json.queryResponse.entity[*].devicesDTO.ipAddress') }}"
+            managed: "{{ device_info | json_query('json.queryResponse.entity[*].devicesDTO.adminStatus') }}"
+            lastCollection: "{{ device_info | json_query('json.queryResponse.entity[*].devicesDTO.collectionDetail') }}"
+            collectionStatus: "{{ device_info | json_query('json.queryResponse.entity[*].devicesDTO.collectionStatus') }}"
+            collectionTime: "{{ device_info | json_query('json.queryResponse.entity[*].devicesDTO.collectionTime') }}"
+            creationTime: "{{ device_info | json_query('json.queryResponse.entity[*].devicesDTO.creationTime') }}"        
+            deviceType: "{{ device_info | json_query('json.queryResponse.entity[*].devicesDTO.deviceType') }}"
+            location: "{{ device_info | json_query('json.queryResponse.entity[*].devicesDTO.location') }}"
+            managementStatus: "{{ device_info | json_query('json.queryResponse.entity[*].devicesDTO.managementStatus') }}" 
+            partNumber: "{{ device_info | json_query('json.queryResponse.entity[*].devicesDTO.manufacturerPartNrs.manufacturerPartNr.partNumber') }}"        
+            productFamily: "{{ device_info | json_query('json.queryResponse.entity[*].devicesDTO.productFamily') }}"        
+            reachability: "{{ device_info | json_query('json.queryResponse.entity[*].devicesDTO.reachability') }}"        
+            softwareType: "{{ device_info | json_query('json.queryResponse.entity[*].devicesDTO.softwareType') }}" 
+            softwareVersion: "{{ device_info | json_query('json.queryResponse.entity[*].devicesDTO.softwareVersion') }}"        
 
 # Create CSV file with results #
-    - name: Create CSV
-      copy: 
-        content: | 
-          {% for host in ansible_play_hosts %}
-          {{ hostvars[host].date }},{{ hostvars[host].deviceName }},{{ hostvars[host].ipAddress }},{{ hostvars[host].managed }},{{ hostvars[host].lastCollection }},{{ hostvars[host].collectionStatus }},{{ hostvars[host].collectionTime }},{{ hostvars[host].deviceType }},{{ hostvars[host].location }},{{ hostvars[host].managementStatus }},{{ hostvars[host].partNumber }},{{ hostvars[host].productFamily }},{{ hostvars[host].reachability }},{{ hostvars[host].softwareType }},{{ hostvars[host].softwareVersion }}
-          {% endfor %}
-        dest: ../documentation/PRIME/csv/prime_device_facts.csv       
-      delegate_to: localhost
-      run_once: true 
+        - name: Create CSV
+          copy: 
+            content: | 
+              {% for host in ansible_play_hosts %}
+              {{ hostvars[host].date }},{{ hostvars[host].deviceName }},{{ hostvars[host].ipAddress }},{{ hostvars[host].managed }},{{ hostvars[host].lastCollection }},{{ hostvars[host].collectionStatus }},{{ hostvars[host].collectionTime }},{{ hostvars[host].deviceType }},{{ hostvars[host].location }},{{ hostvars[host].managementStatus }},{{ hostvars[host].partNumber }},{{ hostvars[host].productFamily }},{{ hostvars[host].reachability }},{{ hostvars[host].softwareType }},{{ hostvars[host].softwareVersion }}
+              {% endfor %}
+            dest: ../documentation/PRIME/csv/prime_device_facts.csv       
+          delegate_to: localhost
+          run_once: true 
 
 # Format CSV #
-    - name: Format CSV File Clean Up
-      replace:
-        path: ../documentation/PRIME/csv/prime_device_facts.csv
-        regexp: '\[|\]|"'
-        replace: ''      
-      delegate_to: localhost
-      run_once: true 
+        - name: Format CSV File Clean Up
+          replace:
+            path: ../documentation/PRIME/csv/prime_device_facts.csv
+            regexp: '\[|\]|\"'
+            replace: ''      
+          delegate_to: localhost
+          run_once: true 
 
 # Format CSV #
-    - name: Format CSV File Clean Up
-      replace:
-        path: ../documentation/PRIME/csv/prime_device_facts.csv
-        regexp: "'"
-        replace: ''
-      delegate_to: localhost
-      run_once: true 
+        - name: Format CSV File Clean Up
+          replace:
+            path: ../documentation/PRIME/csv/prime_device_facts.csv
+            regexp: "'"
+            replace: ''
+          delegate_to: localhost
+          run_once: true 
 
 # Format CSV #
-    - name: Format CSV File Clean Up
-      replace:
-        path: ../documentation/PRIME/csv/prime_device_facts.csv
-        regexp: "<status><general code="
-        replace: ''
-      delegate_to: localhost
-      run_once: true 
+        - name: Format CSV File Clean Up
+          replace:
+            path: ../documentation/PRIME/csv/prime_device_facts.csv
+            regexp: "<status><general code="
+            replace: ''
+          delegate_to: localhost
+          run_once: true 
 
 # Format CSV #
-    - name: Format CSV File Clean Up
-      replace:
-        path: ../documentation/PRIME/csv/prime_device_facts.csv
-        regexp: "/></status>"
-        replace: ''
-      delegate_to: localhost
-      run_once: true 
+        - name: Format CSV File Clean Up
+          replace:
+            path: ../documentation/PRIME/csv/prime_device_facts.csv
+            regexp: "/></status>"
+            replace: ''
+          delegate_to: localhost
+          run_once: true 
 
 # Add Header Row to CSV #
-    - name: Header Row
-      lineinfile:
-        path: ../documentation/PRIME/csv/prime_device_facts.csv
-        insertbefore: BOF
-        line: Weekday,Date,Hostname,IP Address,Managed,Last Collection,Collection Status,Collection Time,Device Type,Location,Management Status,Part Number,Product Family,Reachability,Software Type,Software Version
-      delegate_to: localhost
+        - name: Header Row
+          lineinfile:
+            path: ../documentation/PRIME/csv/prime_device_facts.csv
+            insertbefore: BOF
+            line: Weekday,Date,Hostname,IP Address,Managed,Last Collection,Collection Status,Collection Time,Device Type,Location,Management Status,Part Number,Product Family,Reachability,Software Type,Software Version
+          delegate_to: localhost
+          run_once: true 
 
 # Create Markdown file with results #
-    - name: Create Markdown
-      copy: 
-        content: | 
-          {% for host in ansible_play_hosts %}
-          |{{ hostvars[host].date }} | {{ hostvars[host].deviceName }} | {{ hostvars[host].ipAddress }} | {{ hostvars[host].managed }} | {{ hostvars[host].lastCollection }} | {{ hostvars[host].collectionStatus }} | {{ hostvars[host].collectionTime }} | {{ hostvars[host].deviceType }} | {{ hostvars[host].location }} | {{ hostvars[host].managementStatus }} | {{ hostvars[host].partNumber }} | {{ hostvars[host].productFamily }} | {{ hostvars[host].reachability }} | {{ hostvars[host].softwareType }} | {{ hostvars[host].softwareVersion }} |
-          {% endfor %}
-        dest: ../documentation/PRIME/markdown/prime_device_facts.md    
-      delegate_to: localhost
-      run_once: true 
+        - name: Create Markdown
+          copy: 
+            content: | 
+              {% for host in ansible_play_hosts %}
+              |{{ hostvars[host].date }} | {{ hostvars[host].deviceName }} | {{ hostvars[host].ipAddress }} | {{ hostvars[host].managed }} | {{ hostvars[host].lastCollection }} | {{ hostvars[host].collectionStatus }} | {{ hostvars[host].collectionTime }} | {{ hostvars[host].deviceType }} | {{ hostvars[host].location }} | {{ hostvars[host].managementStatus }} | {{ hostvars[host].partNumber }} | {{ hostvars[host].productFamily }} | {{ hostvars[host].reachability }} | {{ hostvars[host].softwareType }} | {{ hostvars[host].softwareVersion }} |
+              {% endfor %}
+            dest: ../documentation/PRIME/markdown/prime_device_facts.md    
+          delegate_to: localhost
+          run_once: true 
       
 # Format Markdown #
-    - name: Format Markdown File Clean Up
-      replace:
-        path: ../documentation/PRIME/markdown/prime_device_facts.md
-        regexp: '\[|\]|"'
-        replace: ''      
-      delegate_to: localhost
-      run_once: true 
+        - name: Format Markdown File Clean Up
+          replace:
+            path: ../documentation/PRIME/markdown/prime_device_facts.md
+            regexp: '\[|\]|\"'
+            replace: ''      
+          delegate_to: localhost
+          run_once: true 
 
 # Format Markdown #
-    - name: Format Markdown File Commas to Pipes
-      replace:
-        path: ../documentation/PRIME/markdown/prime_device_facts.md
-        regexp: ','
-        replace: ' | '
-      delegate_to: localhost
-      run_once: true 
+        - name: Format Markdown File Commas to Pipes
+          replace:
+            path: ../documentation/PRIME/markdown/prime_device_facts.md
+            regexp: ','
+            replace: ' | '
+          delegate_to: localhost
+          run_once: true 
 
 # Format Markdown #
-    - name: Format Markdown File Clean Up
-      replace:
-        path: ../documentation/PRIME/markdown/prime_device_facts.md
-        regexp: "'"
-        replace: ''
-      delegate_to: localhost
-      run_once: true 
+        - name: Format Markdown File Clean Up
+          replace:
+            path: ../documentation/PRIME/markdown/prime_device_facts.md
+            regexp: "'"
+            replace: ''
+          delegate_to: localhost
+          run_once: true 
 
 # Format Markdown #
-    - name: Format Markdown File Clean Up
-      replace:
-        path: ../documentation/PRIME/markdown/prime_device_facts.md
-        regexp: "<status><general code="
-        replace: ''
-      delegate_to: localhost
-      run_once: true 
+        - name: Format Markdown File Clean Up
+          replace:
+            path: ../documentation/PRIME/markdown/prime_device_facts.md
+            regexp: "<status><general code="
+            replace: ''
+          delegate_to: localhost
+          run_once: true 
 
 # Format Markdown #
-    - name: Format Markdown File Clean Up
-      replace:
-        path: ../documentation/PRIME/markdown/prime_device_facts.md
-        regexp: "/></status>"
-        replace: ''
-      delegate_to: localhost
-      run_once: true 
+        - name: Format Markdown File Clean Up
+          replace:
+            path: ../documentation/PRIME/markdown/prime_device_facts.md
+            regexp: "/></status>"
+            replace: ''
+          delegate_to: localhost
+          run_once: true 
 
 # Add Header Rows to Markdown #
-    - name: Header Row
-      lineinfile:
-        path: ../documentation/PRIME/markdown/prime_device_facts.md
-        insertbefore: BOF
-        line: "{{ item.property }}"
-      with_items:
-        - { property: '| ------- | ---- | -------- | ---------- | ------- | --------------- | ----------------- | --------------- | ----------- | -------- | ----------------- | ----------- | -------------- | ------------ | ------------- | ---------------- |' }
-        - { property: '| Weekday | Date | Hostname | IP Address | Managed | Last Collection | Collection Status | Collection Time | Device Type | Location | Management Status | Part Number | Product Family | Reachability | Software Type | Software Version |' }
-        - { property: '# Cisco Prime Devices' }        
-      delegate_to: localhost
+        - name: Header Row
+          lineinfile:
+            path: ../documentation/PRIME/markdown/prime_device_facts.md
+            insertbefore: BOF
+            line: "{{ item.property }}"
+          with_items:
+            - { property: '| ------- | ---- | -------- | ---------- | ------- | --------------- | ----------------- | --------------- | ----------- | -------- | ----------------- | ----------- | -------------- | ------------ | ------------- | ---------------- |' }
+            - { property: '| Weekday | Date | Hostname | IP Address | Managed | Last Collection | Collection Status | Collection Time | Device Type | Location | Management Status | Part Number | Product Family | Reachability | Software Type | Software Version |' }
+            - { property: '# Cisco Prime Devices' }        
+          delegate_to: localhost
+          run_once: true 
 
 # Create Mind Map # 
-    - name: create prime_device_facts Mind Map 
-      shell: "markmap --no-open ../documentation/PRIME/markdown/prime_device_facts.md -o ../documentation/PRIME/mindmap/prime_device_facts.html"
-      register: markmap
-      delegate_to: localhost     
+        - name: create prime_device_facts Mind Map 
+          shell: "markmap --no-open ../documentation/PRIME/markdown/prime_device_facts.md -o ../documentation/PRIME/mindmap/prime_device_facts.html"
+          register: markmap
+          delegate_to: localhost
+          run_once: true 
+      when: ansible_limit is not defined 
+
+# When Limit on Playbook
+
+    - name: Playbook Limited Make Separate Report for Limit Value
+      block: 
+# Get Device ID from Hostname # 
+        - name: GET Device Entity ID's
+          uri:
+            url: "{{ enterprise_defaults.servers.prime.protocol }}://{{ enterprise_defaults.servers.prime.address }}/webacs/api/v4/data/Devices.json?deviceName={{ inventory_hostname }}.{{ enterprise_defaults.domain }}"
+            user: "{{ enterprise_defaults.servers.prime.api_user }}"
+            password: "{{ prime_password }}"
+            method: GET
+            return_content: yes
+            validate_certs: no
+            force_basic_auth: yes
+            follow_redirects: all
+            body_format: json
+          register: device_id
+          delegate_to: localhost
+    
+# Set Device Fact # 
+        - name: Set Device Fact
+          set_fact:
+            device_entity: "{{ device_id.json.queryResponse.entityId[0]['$'] }}"
+
+# Get Device Info using matching ID #
+        - name: GET Device Info Using Entity ID
+          uri:
+            url: "{{ enterprise_defaults.servers.prime.protocol }}://{{ enterprise_defaults.servers.prime.address }}/webacs/api/v4/data/Devices/{{ device_entity }}.json"
+            user: "{{ enterprise_defaults.servers.prime.api_user }}"
+            password: "{{ prime_password }}"
+            method: GET
+            return_content: yes
+            validate_certs: no
+            force_basic_auth: yes
+            follow_redirects: all
+            body_format: json
+          register: device_info
+          delegate_to: localhost
+
+# Create JSON file with Ansible Facts #
+        - name: Create raw JSON file
+          copy: 
+            content: | 
+              {% for host in ansible_play_hosts %}
+              {{ hostvars[host].device_info | to_nice_json }}
+              {% endfor %}
+            dest: ../documentation/PRIME/json/{{ ansible_limit }}_prime_device_facts.json       
+          delegate_to: localhost
+          run_once: true 
+
+# Create YAML file with Ansible Facts #
+        - name: Create raw YAML
+          copy: 
+            content: | 
+              {% for host in ansible_play_hosts %}
+              {{ hostvars[host].device_info | to_nice_yaml }}
+              {% endfor %}
+            dest: ../documentation/PRIME/yaml/{{ ansible_limit }}_prime_device_facts.yml
+          delegate_to: localhost
+          run_once: true
+
+# Add Headers to YAML #
+        - name: Header Row
+          lineinfile:
+            path: ../documentation/PRIME/yaml/{{ ansible_limit }}_prime_device_facts.yml
+            insertbefore: BOF
+            line: ---        
+          delegate_to: localhost
+
+# Set Facts #
+        - set_fact:
+            date: "{{ device_info['date'] }}"
+            deviceName: "{{ device_info | json_query('json.queryResponse.entity[*].devicesDTO.deviceName') }}"
+            ipAddress: "{{ device_info | json_query('json.queryResponse.entity[*].devicesDTO.ipAddress') }}"
+            managed: "{{ device_info | json_query('json.queryResponse.entity[*].devicesDTO.adminStatus') }}"
+            lastCollection: "{{ device_info | json_query('json.queryResponse.entity[*].devicesDTO.collectionDetail') }}"
+            collectionStatus: "{{ device_info | json_query('json.queryResponse.entity[*].devicesDTO.collectionStatus') }}"
+            collectionTime: "{{ device_info | json_query('json.queryResponse.entity[*].devicesDTO.collectionTime') }}"
+            creationTime: "{{ device_info | json_query('json.queryResponse.entity[*].devicesDTO.creationTime') }}"        
+            deviceType: "{{ device_info | json_query('json.queryResponse.entity[*].devicesDTO.deviceType') }}"
+            location: "{{ device_info | json_query('json.queryResponse.entity[*].devicesDTO.location') }}"
+            managementStatus: "{{ device_info | json_query('json.queryResponse.entity[*].devicesDTO.managementStatus') }}" 
+            partNumber: "{{ device_info | json_query('json.queryResponse.entity[*].devicesDTO.manufacturerPartNrs.manufacturerPartNr.partNumber') }}"        
+            productFamily: "{{ device_info | json_query('json.queryResponse.entity[*].devicesDTO.productFamily') }}"        
+            reachability: "{{ device_info | json_query('json.queryResponse.entity[*].devicesDTO.reachability') }}"        
+            softwareType: "{{ device_info | json_query('json.queryResponse.entity[*].devicesDTO.softwareType') }}" 
+            softwareVersion: "{{ device_info | json_query('json.queryResponse.entity[*].devicesDTO.softwareVersion') }}"        
+
+# Create CSV file with results #
+        - name: Create CSV
+          copy: 
+            content: | 
+              {% for host in ansible_play_hosts %}
+              {{ hostvars[host].date }},{{ hostvars[host].deviceName }},{{ hostvars[host].ipAddress }},{{ hostvars[host].managed }},{{ hostvars[host].lastCollection }},{{ hostvars[host].collectionStatus }},{{ hostvars[host].collectionTime }},{{ hostvars[host].deviceType }},{{ hostvars[host].location }},{{ hostvars[host].managementStatus }},{{ hostvars[host].partNumber }},{{ hostvars[host].productFamily }},{{ hostvars[host].reachability }},{{ hostvars[host].softwareType }},{{ hostvars[host].softwareVersion }}
+              {% endfor %}
+            dest: ../documentation/PRIME/csv/{{ ansible_limit }}_prime_device_facts.csv       
+          delegate_to: localhost
+          run_once: true 
+
+# Format CSV #
+        - name: Format CSV File Clean Up
+          replace:
+            path: ../documentation/PRIME/csv/{{ ansible_limit }}_prime_device_facts.csv
+            regexp: '\[|\]|\"'
+            replace: ''      
+          delegate_to: localhost
+          run_once: true 
+
+# Format CSV #
+        - name: Format CSV File Clean Up
+          replace:
+            path: ../documentation/PRIME/csv/{{ ansible_limit }}_prime_device_facts.csv
+            regexp: "'"
+            replace: ''
+          delegate_to: localhost
+          run_once: true 
+
+# Format CSV #
+        - name: Format CSV File Clean Up
+          replace:
+            path: ../documentation/PRIME/csv/{{ ansible_limit }}_prime_device_facts.csv
+            regexp: "<status><general code="
+            replace: ''
+          delegate_to: localhost
+          run_once: true 
+
+# Format CSV #
+        - name: Format CSV File Clean Up
+          replace:
+            path: ../documentation/PRIME/csv/{{ ansible_limit }}_prime_device_facts.csv
+            regexp: "/></status>"
+            replace: ''
+          delegate_to: localhost
+          run_once: true 
+
+# Add Header Row to CSV #
+        - name: Header Row
+          lineinfile:
+            path: ../documentation/PRIME/csv/{{ ansible_limit }}_prime_device_facts.csv
+            insertbefore: BOF
+            line: Weekday,Date,Hostname,IP Address,Managed,Last Collection,Collection Status,Collection Time,Device Type,Location,Management Status,Part Number,Product Family,Reachability,Software Type,Software Version
+          delegate_to: localhost
+          run_once: true 
+
+# Create Markdown file with results #
+        - name: Create Markdown
+          copy: 
+            content: | 
+              {% for host in ansible_play_hosts %}
+              |{{ hostvars[host].date }} | {{ hostvars[host].deviceName }} | {{ hostvars[host].ipAddress }} | {{ hostvars[host].managed }} | {{ hostvars[host].lastCollection }} | {{ hostvars[host].collectionStatus }} | {{ hostvars[host].collectionTime }} | {{ hostvars[host].deviceType }} | {{ hostvars[host].location }} | {{ hostvars[host].managementStatus }} | {{ hostvars[host].partNumber }} | {{ hostvars[host].productFamily }} | {{ hostvars[host].reachability }} | {{ hostvars[host].softwareType }} | {{ hostvars[host].softwareVersion }} |
+              {% endfor %}
+            dest: ../documentation/PRIME/markdown/{{ ansible_limit }}_prime_device_facts.md    
+          delegate_to: localhost
+          run_once: true 
+      
+# Format Markdown #
+        - name: Format Markdown File Clean Up
+          replace:
+            path: ../documentation/PRIME/markdown/{{ ansible_limit }}_prime_device_facts.md
+            regexp: '\[|\]|\"'
+            replace: ''      
+          delegate_to: localhost
+          run_once: true 
+
+# Format Markdown #
+        - name: Format Markdown File Commas to Pipes
+          replace:
+            path: ../documentation/PRIME/markdown/{{ ansible_limit }}_prime_device_facts.md
+            regexp: ','
+            replace: ' | '
+          delegate_to: localhost
+          run_once: true 
+
+# Format Markdown #
+        - name: Format Markdown File Clean Up
+          replace:
+            path: ../documentation/PRIME/markdown/{{ ansible_limit }}_prime_device_facts.md
+            regexp: "'"
+            replace: ''
+          delegate_to: localhost
+          run_once: true 
+
+# Format Markdown #
+        - name: Format Markdown File Clean Up
+          replace:
+            path: ../documentation/PRIME/markdown/{{ ansible_limit }}_prime_device_facts.md
+            regexp: "<status><general code="
+            replace: ''
+          delegate_to: localhost
+          run_once: true 
+
+# Format Markdown #
+        - name: Format Markdown File Clean Up
+          replace:
+            path: ../documentation/PRIME/markdown/{{ ansible_limit }}_prime_device_facts.md
+            regexp: "/></status>"
+            replace: ''
+          delegate_to: localhost
+          run_once: true 
+
+# Add Header Rows to Markdown #
+        - name: Header Row
+          lineinfile:
+            path: ../documentation/PRIME/markdown/{{ ansible_limit }}_prime_device_facts.md
+            insertbefore: BOF
+            line: "{{ item.property }}"
+          with_items:
+            - { property: '| ------- | ---- | -------- | ---------- | ------- | --------------- | ----------------- | --------------- | ----------- | -------- | ----------------- | ----------- | -------------- | ------------ | ------------- | ---------------- |' }
+            - { property: '| Weekday | Date | Hostname | IP Address | Managed | Last Collection | Collection Status | Collection Time | Device Type | Location | Management Status | Part Number | Product Family | Reachability | Software Type | Software Version |' }
+            - { property: '# Cisco Prime Devices' }        
+          delegate_to: localhost
+          run_once: true 
+
+# Create Mind Map # 
+        - name: create prime_device_facts Mind Map 
+          shell: "markmap --no-open ../documentation/PRIME/markdown/{{ ansible_limit }}_prime_device_facts.md -o ../documentation/PRIME/mindmap/{{ ansible_limit }}_prime_device_facts.html"
+          register: markmap
+          delegate_to: localhost
+          run_once: true 
+      when: ansible_limit is defined 
 
 # Git Add / Commit / Push#
 - hosts: localhost

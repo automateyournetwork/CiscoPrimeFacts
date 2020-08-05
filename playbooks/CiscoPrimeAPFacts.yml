@@ -8,7 +8,6 @@
       private: yes 
 
   tasks:
-
 # Register Password Name #
     - set_fact:
         prime_password: "{{ Prime_Password_Prompt }}"        
@@ -16,141 +15,289 @@
       delegate_to: localhost
       run_once: true 
 
+# When No Limit on Playbook
+
+    - name: Playbook Not Limited Update Master Report
+      block:
+
 # GET AP Entity ID #      
-    - name: GET AP Entity ID's
-      uri:
-        url: "{{ enterprise_defaults.servers.prime.protocol }}://{{ enterprise_defaults.servers.prime.address }}/webacs/api/v1/data/AccessPointDetails?cdpNeighbor.neighborName={{ inventory_hostname }}.hoc-lab-cdc.ca"
-        user: "{{ enterprise_defaults.servers.prime.api_user }}"
-        password: "{{ prime_password }}"
-        method: GET
-        return_content: yes
-        validate_certs: no
-        force_basic_auth: yes
-        follow_redirects: all
-      register: AP_id
-      delegate_to: localhost
+        - name: GET AP Entity ID's
+          uri:
+            url: "{{ enterprise_defaults.servers.prime.protocol }}://{{ enterprise_defaults.servers.prime.address }}/webacs/api/v1/data/AccessPointDetails?cdpNeighbor.neighborName={{ inventory_hostname }}.hoc-lab-cdc.ca"
+            user: "{{ enterprise_defaults.servers.prime.api_user }}"
+            password: "{{ prime_password }}"
+            method: GET
+            return_content: yes
+            validate_certs: no
+            force_basic_auth: yes
+            follow_redirects: all
+          register: AP_id
+          delegate_to: localhost
 
 # Set AP Fact # 
-    - name: query xml
-      xml:
-        xmlstring: "{{AP_id.content}}"
-        xpath: /queryResponse/entityId
-        content: text
-      register: filtered_AP
+        - name: query xml
+          xml:
+            xmlstring: "{{AP_id.content}}"
+            xpath: /queryResponse/entityId
+            content: text
+          register: filtered_AP
 
 # Get AP Info using matching ID # 
-    - name: GET AP Details
-      uri:
-        url: "{{ enterprise_defaults.servers.prime.protocol }}://{{ enterprise_defaults.servers.prime.address }}//webacs/api/v1/data/AccessPointDetails/{{ item.entityId }}.json"
-        user: "{{ enterprise_defaults.servers.prime.api_user }}"
-        password: "{{ prime_password }}"
-        method: GET
-        return_content: yes
-        validate_certs: no
-        force_basic_auth: yes
-        follow_redirects: all
-      register: AP_detail
-      delegate_to: localhost
-      ignore_errors: true
-      with_items: "{{ filtered_AP.matches }}"
+        - name: GET AP Details
+          uri:
+            url: "{{ enterprise_defaults.servers.prime.protocol }}://{{ enterprise_defaults.servers.prime.address }}//webacs/api/v1/data/AccessPointDetails/{{ item.entityId }}.json"
+            user: "{{ enterprise_defaults.servers.prime.api_user }}"
+            password: "{{ prime_password }}"
+            method: GET
+            return_content: yes
+            validate_certs: no
+            force_basic_auth: yes
+            follow_redirects: all
+          register: AP_detail
+          delegate_to: localhost
+          ignore_errors: true
+          with_items: "{{ filtered_AP.matches }}"
 
 # Create JSON file with Ansible Facts #
-    - name: Create raw JSON file
-      copy: 
-        content: | 
-          {% for host in ansible_play_hosts %}
-          {{ hostvars[host].AP_detail | to_nice_json }}
-          {% endfor %}
-        dest: ../documentation/PRIME/json/prime_AP_facts.json       
-      delegate_to: localhost
-      run_once: true 
+        - name: Create raw JSON file
+          copy: 
+            content: | 
+              {% for host in ansible_play_hosts %}
+              {{ hostvars[host].AP_detail | to_nice_json }}
+              {% endfor %}
+            dest: ../documentation/PRIME/json/prime_AP_facts.json       
+          delegate_to: localhost
+          run_once: true 
 
 # Create YAML file with Ansible Facts #
-    - name: Create raw YAML file
-      copy: 
-        content: | 
-          {% for host in ansible_play_hosts %}
-          {{ hostvars[host].AP_detail | to_nice_yaml }}
-          {% endfor %}
-        dest: ../documentation/PRIME/yaml/prime_AP_facts.yml       
-      delegate_to: localhost
-      run_once: true 
+        - name: Create raw YAML file
+          copy: 
+            content: | 
+              {% for host in ansible_play_hosts %}
+              {{ hostvars[host].AP_detail | to_nice_yaml }}
+              {% endfor %}
+            dest: ../documentation/PRIME/yaml/prime_AP_facts.yml       
+          delegate_to: localhost
+          run_once: true 
 
 # Add Headers to YAML #
-    - name: Header Row
-      lineinfile:
-        path: ../documentation/PRIME/yaml/prime_AP_facts.yml
-        insertbefore: BOF
-        line: ---        
-      delegate_to: localhost
+        - name: Header Row
+          lineinfile:
+            path: ../documentation/PRIME/yaml/prime_AP_facts.yml
+            insertbefore: BOF
+            line: ---        
+          delegate_to: localhost
 
 # Add Create CSV with header row to CSV #
-    - name: Header Row
-      copy:
-        dest: ../documentation/PRIME/csv/prime_AP_facts.csv
-        content: "{{ item.property }}"
-      with_items:
-        - { property: 'Weekday,Date,Switch,Platform,Switch IP,Interface,Interface Speed,Interface Duplex,AP Name,AP Model,AP Group,AP Type,Type,AP Serial Number,AP Software,AP Admin Status,AP Reachability,AP Status,AP IP Address,AP Ethernet MAC,AP MAC,AP Location,AP Uptime,AP Client Count (Total),AP 2.4GHz Clients,AP 5GHz Clients,AP WIPS Enabled,AP CAPWAP Join Time,AP CAPWAP Uptime,AP Controller Name,AP Controller IP,AP FlexConnect Mode,AP Maintenance Mode,AP PoE Value,AP PoE Status,AP Rogue Detection,AP SSH Enabled,AP Telnet Enabled,AP WLAN 01 SSID,AP WLAN 01 SSID Broadcast,AP WLAN 01 Profile,AP WLAN 02 SSID,AP WLAN 02 SSID Broadcast,AP WLAN 02 Profile,AP WLAN 03 SSIDs,AP WLAN 03 SSID Broadcast,AP WLAN 03 Profile,AP WLAN 04 SSID,AP WLAN 04 SSID Broadcast,AP WLAN 04 Profile,AP WLAN 05 SSID,AP WLAN 05 SSID Broadcast,AP WLAN 05 Profile,AP WLAN 06 SSID,AP WLAN 06 SSID Broadcast,AP WLAN 06 Profile,AP WLAN 07 SSID,AP WLAN 07 SSID Broadcast,AP WLAN 07 Profile,AP WLAN 08 SSID,AP WLAN 08 SSID Broadcast,AP WLAN 08 Profile,AP WLAN01 Mapping SSID,AP WLAN01 Mapping VLAN ID,AP WLAN01 Mapping WLAN ID,AP WLAN02 Mapping SSID,AP WLAN02 Mapping VLAN ID,AP WLAN02 Mapping WLAN ID,AP WLAN03 Mapping SSID,AP WLAN03 Mapping VLAN ID,AP WLAN03 Mapping WLAN ID' }
-      delegate_to: localhost
+        - name: Header Row
+          copy:
+            dest: ../documentation/PRIME/csv/prime_AP_facts.csv
+            content: "{{ item.property }}"
+          with_items:
+            - { property: 'Weekday,Date,Switch,Platform,Switch IP,Interface,Interface Speed,Interface Duplex,AP Name,AP Model,AP Group,AP Type,Type,AP Serial Number,AP Software,AP Admin Status,AP Reachability,AP Status,AP IP Address,AP Ethernet MAC,AP MAC,AP Location,AP Uptime,AP Client Count (Total),AP 2.4GHz Clients,AP 5GHz Clients,AP WIPS Enabled,AP CAPWAP Join Time,AP CAPWAP Uptime,AP Controller Name,AP Controller IP,AP FlexConnect Mode,AP Maintenance Mode,AP PoE Value,AP PoE Status,AP Rogue Detection,AP SSH Enabled,AP Telnet Enabled,AP WLAN 01 SSID,AP WLAN 01 SSID Broadcast,AP WLAN 01 Profile,AP WLAN 02 SSID,AP WLAN 02 SSID Broadcast,AP WLAN 02 Profile,AP WLAN 03 SSIDs,AP WLAN 03 SSID Broadcast,AP WLAN 03 Profile,AP WLAN 04 SSID,AP WLAN 04 SSID Broadcast,AP WLAN 04 Profile,AP WLAN 05 SSID,AP WLAN 05 SSID Broadcast,AP WLAN 05 Profile,AP WLAN 06 SSID,AP WLAN 06 SSID Broadcast,AP WLAN 06 Profile,AP WLAN 07 SSID,AP WLAN 07 SSID Broadcast,AP WLAN 07 Profile,AP WLAN 08 SSID,AP WLAN 08 SSID Broadcast,AP WLAN 08 Profile,AP WLAN01 Mapping SSID,AP WLAN01 Mapping VLAN ID,AP WLAN01 Mapping WLAN ID,AP WLAN02 Mapping SSID,AP WLAN02 Mapping VLAN ID,AP WLAN02 Mapping WLAN ID,AP WLAN03 Mapping SSID,AP WLAN03 Mapping VLAN ID,AP WLAN03 Mapping WLAN ID' }
+          delegate_to: localhost
 
 # Fill CSV file with results #
-    - name: Create CSV
-      lineinfile: 
-        create: yes
-        path: ../documentation/PRIME/csv/prime_AP_facts.csv  
-        line: "{{ item[0].date }},{{ item[1].accessPointDetailsDTO.cdpNeighbors.cdpNeighbor.neighborName }},{{ item[1].accessPointDetailsDTO.cdpNeighbors.cdpNeighbor.platform }},{{ item[1].accessPointDetailsDTO.cdpNeighbors.cdpNeighbor.neighborIpAddress }},{{ item[1].accessPointDetailsDTO.cdpNeighbors.cdpNeighbor.neighborPort }},{{ item[1].accessPointDetailsDTO.cdpNeighbors.cdpNeighbor.interfaceSpeed }},{{ item[1].accessPointDetailsDTO.cdpNeighbors.cdpNeighbor.duplex }},{{ item[1].accessPointDetailsDTO.name }},{{ item[1].accessPointDetailsDTO.model }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.apGroupName }},{{ item[1].accessPointDetailsDTO.apType }},{{ item[1].accessPointDetailsDTO.type }},{{ item[1].accessPointDetailsDTO.serialNumber }},{{ item[1].accessPointDetailsDTO.softwareVersion }},{{ item[1].accessPointDetailsDTO.adminStatus }},{{ item[1].accessPointDetailsDTO.reachabilityStatus }},{{ item[1].accessPointDetailsDTO.status }},{{ item[1].accessPointDetailsDTO.ipAddress }},{{ item[1].accessPointDetailsDTO.ethernetMac }},{{ item[1].accessPointDetailsDTO.macAddress }},{{ item[1].accessPointDetailsDTO.locationHeirarchy }},{% if item[1].accessPointDetailsDTO.upTime is defined %} {{ item[1].accessPointDetailsDTO.upTime }} {% else %} N/A {% endif %},{{ item[1].accessPointDetailsDTO.clientCount }},{{ item[1].accessPointDetailsDTO.clientCount_2_4GHz }},{{ item[1].accessPointDetailsDTO.clientCount_5GHz }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.WIPSEnabled }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.capwapJoinTakenTime }},{% if  item[1].accessPointDetailsDTO.unifiedApInfo.capwapUpTime is defined %} {{ item[1].accessPointDetailsDTO.unifiedApInfo.capwapUpTime }} {% else %} N/A {% endif %},{% if item[1].accessPointDetailsDTO.unifiedApInfo.controllerName is defined %} {{ item[1].accessPointDetailsDTO.unifiedApInfo.controllerName }} {% else %} N/A {% endif %},{% if item[1].accessPointDetailsDTO.unifiedApInfo.controllerIpAddress is defined %} {{ item[1].accessPointDetailsDTO.unifiedApInfo.controllerIpAddress }} {% else %} N/A {% endif %},{{ item[1].accessPointDetailsDTO.unifiedApInfo.flexConnectMode }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.maintenanceMode }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.poeStatus }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.poeStatusEnum }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.rogueDetectionEnabled }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.sshEnabled }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.telnetEnabled }},{% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[0].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[0].ssid }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[0].broadcastSsidEnabled }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[0].profileName }}{% else %}N/A,N/A,N/A{% endif %},{% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[1].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[1].ssid }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[1].broadcastSsidEnabled }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[1].profileName }}{% else %}N/A,N/A,N/A{% endif %},{% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[2].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[2].ssid }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[2].broadcastSsidEnabled }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[2].profileName }}{% else %}N/A,N/A,N/A{% endif %},{% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[3].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[3].ssid }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[3].broadcastSsidEnabled }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[3].profileName }}{% else %}N/A,N/A,N/A{% endif %},{% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[4].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[4].ssid }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[4].broadcastSsidEnabled }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[4].profileName }}{% else %}N/A,N/A,N/A{% endif %},{% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[5].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[5].ssid }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[5].broadcastSsidEnabled }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[5].profileName }}{% else %}N/A,N/A,N/A{% endif %},{% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[6].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[6].ssid }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[6].broadcastSsidEnabled }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[6].profileName }}{% else %}N/A,N/A,N/A{% endif %},{% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[7].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[7].ssid }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[7].broadcastSsidEnabled }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[7].profileName }}{% else %}N/A,N/A,N/A{% endif %},{% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[0].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[0].ssid }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[0].vlanId }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[0].wlanId }}{% else %}N/A,N/A,N/A{% endif %},{% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[0].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[1].ssid }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[1].vlanId }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[1].wlanId }}{% else %}N/A,N/A,N/A{% endif %},{% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[2].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[2].ssid }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[2].vlanId }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[2].wlanId }}{% else %}N/A,N/A,N/A{% endif %}"
-      with_subelements:
-        - "{{ AP_detail.results }}"
-        - json.queryResponse.entity
-      delegate_to: localhost
+        - name: Create CSV
+          lineinfile: 
+            create: yes
+            path: ../documentation/PRIME/csv/prime_AP_facts.csv  
+            line: "{{ item[0].date }},{{ item[1].accessPointDetailsDTO.cdpNeighbors.cdpNeighbor.neighborName }},{{ item[1].accessPointDetailsDTO.cdpNeighbors.cdpNeighbor.platform }},{{ item[1].accessPointDetailsDTO.cdpNeighbors.cdpNeighbor.neighborIpAddress }},{{ item[1].accessPointDetailsDTO.cdpNeighbors.cdpNeighbor.neighborPort }},{{ item[1].accessPointDetailsDTO.cdpNeighbors.cdpNeighbor.interfaceSpeed }},{{ item[1].accessPointDetailsDTO.cdpNeighbors.cdpNeighbor.duplex }},{{ item[1].accessPointDetailsDTO.name }},{{ item[1].accessPointDetailsDTO.model }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.apGroupName }},{{ item[1].accessPointDetailsDTO.apType }},{{ item[1].accessPointDetailsDTO.type }},{{ item[1].accessPointDetailsDTO.serialNumber }},{{ item[1].accessPointDetailsDTO.softwareVersion }},{{ item[1].accessPointDetailsDTO.adminStatus }},{{ item[1].accessPointDetailsDTO.reachabilityStatus }},{{ item[1].accessPointDetailsDTO.status }},{{ item[1].accessPointDetailsDTO.ipAddress }},{{ item[1].accessPointDetailsDTO.ethernetMac }},{{ item[1].accessPointDetailsDTO.macAddress }},{{ item[1].accessPointDetailsDTO.locationHeirarchy }},{% if item[1].accessPointDetailsDTO.upTime is defined %} {{ item[1].accessPointDetailsDTO.upTime }} {% else %} N/A {% endif %},{{ item[1].accessPointDetailsDTO.clientCount }},{{ item[1].accessPointDetailsDTO.clientCount_2_4GHz }},{{ item[1].accessPointDetailsDTO.clientCount_5GHz }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.WIPSEnabled }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.capwapJoinTakenTime }},{% if  item[1].accessPointDetailsDTO.unifiedApInfo.capwapUpTime is defined %} {{ item[1].accessPointDetailsDTO.unifiedApInfo.capwapUpTime }} {% else %} N/A {% endif %},{% if item[1].accessPointDetailsDTO.unifiedApInfo.controllerName is defined %} {{ item[1].accessPointDetailsDTO.unifiedApInfo.controllerName }} {% else %} N/A {% endif %},{% if item[1].accessPointDetailsDTO.unifiedApInfo.controllerIpAddress is defined %} {{ item[1].accessPointDetailsDTO.unifiedApInfo.controllerIpAddress }} {% else %} N/A {% endif %},{{ item[1].accessPointDetailsDTO.unifiedApInfo.flexConnectMode }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.maintenanceMode }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.poeStatus }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.poeStatusEnum }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.rogueDetectionEnabled }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.sshEnabled }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.telnetEnabled }},{% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[0].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[0].ssid }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[0].broadcastSsidEnabled }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[0].profileName }}{% else %}N/A,N/A,N/A{% endif %},{% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[1].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[1].ssid }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[1].broadcastSsidEnabled }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[1].profileName }}{% else %}N/A,N/A,N/A{% endif %},{% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[2].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[2].ssid }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[2].broadcastSsidEnabled }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[2].profileName }}{% else %}N/A,N/A,N/A{% endif %},{% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[3].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[3].ssid }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[3].broadcastSsidEnabled }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[3].profileName }}{% else %}N/A,N/A,N/A{% endif %},{% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[4].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[4].ssid }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[4].broadcastSsidEnabled }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[4].profileName }}{% else %}N/A,N/A,N/A{% endif %},{% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[5].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[5].ssid }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[5].broadcastSsidEnabled }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[5].profileName }}{% else %}N/A,N/A,N/A{% endif %},{% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[6].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[6].ssid }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[6].broadcastSsidEnabled }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[6].profileName }}{% else %}N/A,N/A,N/A{% endif %},{% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[7].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[7].ssid }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[7].broadcastSsidEnabled }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[7].profileName }}{% else %}N/A,N/A,N/A{% endif %},{% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[0].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[0].ssid }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[0].vlanId }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[0].wlanId }}{% else %}N/A,N/A,N/A{% endif %},{% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[0].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[1].ssid }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[1].vlanId }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[1].wlanId }}{% else %}N/A,N/A,N/A{% endif %},{% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[2].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[2].ssid }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[2].vlanId }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[2].wlanId }}{% else %}N/A,N/A,N/A{% endif %}"
+          with_subelements:
+            - "{{ AP_detail.results }}"
+            - json.queryResponse.entity
+          delegate_to: localhost
 
 # Add Create Markdown with header row to Markdown #
-    - name: Header Row
-      copy:
-        dest: ../documentation/PRIME/markdown/prime_AP_facts.md
-        content: "{{ item.property }}"
-      with_items:
-        - { property: '| ------- | ---- | ------ | -------- | --------- | --------- | --------------- | ---------------- | ------- | -------- | -------- | ------- | ---- | ---------------- | ----------- | --------------- | --------------- | --------- | ------------- | --------------- | ------ | ----------- | --------- | ----------------------- | ----------------- | --------------- | --------------- | ------------------- | ---------------- | ------------------ | ---------------- | ------------------- | ------------------- | ------------ | ------------- | ------------------ | -------------- | ----------------- | --------------- | ------------------------- | ------------------ | --------------- | ------------------------- | ------------------ |  --------------- | ------------------------- | ------------------ |  -------------- | ------------------------- | ------------------ |  -------------- | ------------------------- | ------------------ | --------------- | ------------------------- | ------------------ | --------------- | ------------------------- | ------------------ | --------------- | ------------------------- | ------------------ |' }
-      delegate_to: localhost
+        - name: Header Row
+          copy:
+            dest: ../documentation/PRIME/markdown/prime_AP_facts.md
+            content: "{{ item.property }}"
+          with_items:
+            - { property: '| ------- | ---- | ------ | -------- | --------- | --------- | --------------- | ---------------- | ------- | -------- | -------- | ------- | ---- | ---------------- | ----------- | --------------- | --------------- | --------- | ------------- | --------------- | ------ | ----------- | --------- | ----------------------- | ----------------- | --------------- | --------------- | ------------------- | ---------------- | ------------------ | ---------------- | ------------------- | ------------------- | ------------ | ------------- | ------------------ | -------------- | ----------------- | --------------- | ------------------------- | ------------------ | --------------- | ------------------------- | ------------------ |  --------------- | ------------------------- | ------------------ |  -------------- | ------------------------- | ------------------ |  -------------- | ------------------------- | ------------------ | --------------- | ------------------------- | ------------------ | --------------- | ------------------------- | ------------------ | --------------- | ------------------------- | ------------------ |' }
+          delegate_to: localhost
 
 # Add table headers to Markdown
-    - name: Table Headers
-      lineinfile:
-        path: ../documentation/PRIME/markdown/prime_AP_facts.md
-        insertbefore: BOF
-        line: "{{ item.property }}"
-        state: present
-      with_items:
-        - { property: '| Weekday | Date | Switch | Platform | Switch IP | Interface | Interface Speed | Interface Duplex | AP Name | AP Model | AP Group | AP Type | Type | AP Serial Number | AP Software | AP Admin Status | AP Reachability | AP Status | AP IP Address | AP Ethernet MAC | AP MAC | AP Location | AP Uptime | AP Client Count (Total) | AP 2.4GHz Clients | AP 5GHz Clients | AP WIPS Enabled | AP CAPWAP Join Time | AP CAPWAP Uptime | AP Controller Name | AP Controller IP | AP FlexConnect Mode | AP Maintenance Mode | AP PoE Value | AP PoE Status | AP Rogue Detection | AP SSH Enabled | AP Telnet Enabled | AP WLAN 01 SSID | AP WLAN 01 SSID Broadcast | AP WLAN 01 Profile | AP WLAN 02 SSID | AP WLAN 02 SSID Broadcast | AP WLAN 02 Profile | AP WLAN 03 SSIDs | AP WLAN 03 SSID Broadcast | AP WLAN 03 Profile | AP WLAN 04 SSID | AP WLAN 04 SSID Broadcast | AP WLAN 04 Profile | AP WLAN 05 SSID | AP WLAN 05 SSID Broadcast | AP WLAN 05 Profile | AP WLAN 06 SSID | AP WLAN 06 SSID Broadcast | AP WLAN 06 Profile | AP WLAN 07 SSID | AP WLAN 07 SSID Broadcast | AP WLAN 07 Profile | AP WLAN 08 SSID | AP WLAN 08 SSID Broadcast | AP WLAN 08 Profile |' }
-        - { property: '# Cisco Prime AP Details' }
-      delegate_to: localhost
+        - name: Table Headers
+          lineinfile:
+            path: ../documentation/PRIME/markdown/prime_AP_facts.md
+            insertbefore: BOF
+            line: "{{ item.property }}"
+            state: present
+          with_items:
+            - { property: '| Weekday | Date | Switch | Platform | Switch IP | Interface | Interface Speed | Interface Duplex | AP Name | AP Model | AP Group | AP Type | Type | AP Serial Number | AP Software | AP Admin Status | AP Reachability | AP Status | AP IP Address | AP Ethernet MAC | AP MAC | AP Location | AP Uptime | AP Client Count (Total) | AP 2.4GHz Clients | AP 5GHz Clients | AP WIPS Enabled | AP CAPWAP Join Time | AP CAPWAP Uptime | AP Controller Name | AP Controller IP | AP FlexConnect Mode | AP Maintenance Mode | AP PoE Value | AP PoE Status | AP Rogue Detection | AP SSH Enabled | AP Telnet Enabled | AP WLAN 01 SSID | AP WLAN 01 SSID Broadcast | AP WLAN 01 Profile | AP WLAN 02 SSID | AP WLAN 02 SSID Broadcast | AP WLAN 02 Profile | AP WLAN 03 SSIDs | AP WLAN 03 SSID Broadcast | AP WLAN 03 Profile | AP WLAN 04 SSID | AP WLAN 04 SSID Broadcast | AP WLAN 04 Profile | AP WLAN 05 SSID | AP WLAN 05 SSID Broadcast | AP WLAN 05 Profile | AP WLAN 06 SSID | AP WLAN 06 SSID Broadcast | AP WLAN 06 Profile | AP WLAN 07 SSID | AP WLAN 07 SSID Broadcast | AP WLAN 07 Profile | AP WLAN 08 SSID | AP WLAN 08 SSID Broadcast | AP WLAN 08 Profile |' }
+            - { property: '# Cisco Prime AP Details' }
+          delegate_to: localhost
 
 # Fill Markdown file with results #
-    - name: Create Markdown
-      lineinfile: 
-        create: yes
-        path: ../documentation/PRIME/markdown/prime_AP_facts.md
-        line: "| {{ item[0].date }} | {{ item[1].accessPointDetailsDTO.cdpNeighbors.cdpNeighbor.neighborName }} | {{ item[1].accessPointDetailsDTO.cdpNeighbors.cdpNeighbor.platform }} | {{ item[1].accessPointDetailsDTO.cdpNeighbors.cdpNeighbor.neighborIpAddress }} | {{ item[1].accessPointDetailsDTO.cdpNeighbors.cdpNeighbor.neighborPort }} | {{ item[1].accessPointDetailsDTO.cdpNeighbors.cdpNeighbor.interfaceSpeed }} | {{ item[1].accessPointDetailsDTO.cdpNeighbors.cdpNeighbor.duplex }} | {{ item[1].accessPointDetailsDTO.name }} | {{ item[1].accessPointDetailsDTO.model }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.apGroupName }} | {{ item[1].accessPointDetailsDTO.apType }} | {{ item[1].accessPointDetailsDTO.type }} | {{ item[1].accessPointDetailsDTO.serialNumber }} | {{ item[1].accessPointDetailsDTO.softwareVersion }} | {{ item[1].accessPointDetailsDTO.adminStatus }} | {{ item[1].accessPointDetailsDTO.reachabilityStatus }} | {{ item[1].accessPointDetailsDTO.status }} | {{ item[1].accessPointDetailsDTO.ipAddress }} | {{ item[1].accessPointDetailsDTO.ethernetMac }} | {{ item[1].accessPointDetailsDTO.macAddress }} | {{ item[1].accessPointDetailsDTO.locationHeirarchy }} | {% if item[1].accessPointDetailsDTO.upTime is defined %} {{ item[1].accessPointDetailsDTO.upTime }} {% else %} N/A {% endif %} | {{ item[1].accessPointDetailsDTO.clientCount }} | {{ item[1].accessPointDetailsDTO.clientCount_2_4GHz }} | {{ item[1].accessPointDetailsDTO.clientCount_5GHz }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.WIPSEnabled }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.capwapJoinTakenTime }} | {% if  item[1].accessPointDetailsDTO.unifiedApInfo.capwapUpTime is defined %} {{ item[1].accessPointDetailsDTO.unifiedApInfo.capwapUpTime }} {% else %} N/A {% endif %} | {% if item[1].accessPointDetailsDTO.unifiedApInfo.controllerName is defined %} {{ item[1].accessPointDetailsDTO.unifiedApInfo.controllerName }} {% else %} N/A {% endif %} | {% if item[1].accessPointDetailsDTO.unifiedApInfo.controllerIpAddress is defined %} {{ item[1].accessPointDetailsDTO.unifiedApInfo.controllerIpAddress }} {% else %} N/A {% endif %} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.flexConnectMode }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.maintenanceMode }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.poeStatus }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.poeStatusEnum }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.rogueDetectionEnabled }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.sshEnabled }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.telnetEnabled }} | {% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[0].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[0].ssid }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[0].broadcastSsidEnabled }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[0].profileName }}{% else %}N/A | N/A | N/A{% endif %} | {% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[1].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[1].ssid }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[1].broadcastSsidEnabled }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[1].profileName }}{% else %}N/A | N/A | N/A{% endif %} | {% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[2].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[2].ssid }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[2].broadcastSsidEnabled }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[2].profileName }}{% else %}N/A | N/A | N/A{% endif %} | {% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[3].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[3].ssid }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[3].broadcastSsidEnabled }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[3].profileName }}{% else %}N/A | N/A | N/A{% endif %} | {% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[4].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[4].ssid }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[4].broadcastSsidEnabled }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[4].profileName }}{% else %}N/A | N/A | N/A{% endif %} | {% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[5].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[5].ssid }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[5].broadcastSsidEnabled }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[5].profileName }}{% else %}N/A | N/A | N/A{% endif %} | {% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[6].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[6].ssid }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[6].broadcastSsidEnabled }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[6].profileName }}{% else %}N/A | N/A | N/A{% endif %} | {% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[7].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[7].ssid }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[7].broadcastSsidEnabled }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[7].profileName }}{% else %}N/A | N/A | N/A{% endif %} | {% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[0].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[0].ssid }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[0].vlanId }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[0].wlanId }}{% else %}N/A | N/A | N/A{% endif %} | {% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[0].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[1].ssid }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[1].vlanId }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[1].wlanId }}{% else %}N/A | N/A | N/A{% endif %} | {% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[2].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[2].ssid }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[2].vlanId }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[2].wlanId }}{% else %}N/A | N/A | N/A{% endif %} |"
-      with_subelements:
-        - "{{ AP_detail.results }}"
-        - json.queryResponse.entity
-      delegate_to: localhost
+        - name: Create Markdown
+          lineinfile: 
+            create: yes
+            path: ../documentation/PRIME/markdown/prime_AP_facts.md
+            line: "| {{ item[0].date }} | {{ item[1].accessPointDetailsDTO.cdpNeighbors.cdpNeighbor.neighborName }} | {{ item[1].accessPointDetailsDTO.cdpNeighbors.cdpNeighbor.platform }} | {{ item[1].accessPointDetailsDTO.cdpNeighbors.cdpNeighbor.neighborIpAddress }} | {{ item[1].accessPointDetailsDTO.cdpNeighbors.cdpNeighbor.neighborPort }} | {{ item[1].accessPointDetailsDTO.cdpNeighbors.cdpNeighbor.interfaceSpeed }} | {{ item[1].accessPointDetailsDTO.cdpNeighbors.cdpNeighbor.duplex }} | {{ item[1].accessPointDetailsDTO.name }} | {{ item[1].accessPointDetailsDTO.model }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.apGroupName }} | {{ item[1].accessPointDetailsDTO.apType }} | {{ item[1].accessPointDetailsDTO.type }} | {{ item[1].accessPointDetailsDTO.serialNumber }} | {{ item[1].accessPointDetailsDTO.softwareVersion }} | {{ item[1].accessPointDetailsDTO.adminStatus }} | {{ item[1].accessPointDetailsDTO.reachabilityStatus }} | {{ item[1].accessPointDetailsDTO.status }} | {{ item[1].accessPointDetailsDTO.ipAddress }} | {{ item[1].accessPointDetailsDTO.ethernetMac }} | {{ item[1].accessPointDetailsDTO.macAddress }} | {{ item[1].accessPointDetailsDTO.locationHeirarchy }} | {% if item[1].accessPointDetailsDTO.upTime is defined %} {{ item[1].accessPointDetailsDTO.upTime }} {% else %} N/A {% endif %} | {{ item[1].accessPointDetailsDTO.clientCount }} | {{ item[1].accessPointDetailsDTO.clientCount_2_4GHz }} | {{ item[1].accessPointDetailsDTO.clientCount_5GHz }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.WIPSEnabled }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.capwapJoinTakenTime }} | {% if  item[1].accessPointDetailsDTO.unifiedApInfo.capwapUpTime is defined %} {{ item[1].accessPointDetailsDTO.unifiedApInfo.capwapUpTime }} {% else %} N/A {% endif %} | {% if item[1].accessPointDetailsDTO.unifiedApInfo.controllerName is defined %} {{ item[1].accessPointDetailsDTO.unifiedApInfo.controllerName }} {% else %} N/A {% endif %} | {% if item[1].accessPointDetailsDTO.unifiedApInfo.controllerIpAddress is defined %} {{ item[1].accessPointDetailsDTO.unifiedApInfo.controllerIpAddress }} {% else %} N/A {% endif %} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.flexConnectMode }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.maintenanceMode }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.poeStatus }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.poeStatusEnum }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.rogueDetectionEnabled }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.sshEnabled }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.telnetEnabled }} | {% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[0].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[0].ssid }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[0].broadcastSsidEnabled }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[0].profileName }}{% else %}N/A | N/A | N/A{% endif %} | {% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[1].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[1].ssid }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[1].broadcastSsidEnabled }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[1].profileName }}{% else %}N/A | N/A | N/A{% endif %} | {% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[2].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[2].ssid }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[2].broadcastSsidEnabled }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[2].profileName }}{% else %}N/A | N/A | N/A{% endif %} | {% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[3].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[3].ssid }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[3].broadcastSsidEnabled }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[3].profileName }}{% else %}N/A | N/A | N/A{% endif %} | {% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[4].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[4].ssid }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[4].broadcastSsidEnabled }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[4].profileName }}{% else %}N/A | N/A | N/A{% endif %} | {% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[5].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[5].ssid }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[5].broadcastSsidEnabled }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[5].profileName }}{% else %}N/A | N/A | N/A{% endif %} | {% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[6].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[6].ssid }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[6].broadcastSsidEnabled }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[6].profileName }}{% else %}N/A | N/A | N/A{% endif %} | {% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[7].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[7].ssid }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[7].broadcastSsidEnabled }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[7].profileName }}{% else %}N/A | N/A | N/A{% endif %} | {% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[0].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[0].ssid }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[0].vlanId }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[0].wlanId }}{% else %}N/A | N/A | N/A{% endif %} | {% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[0].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[1].ssid }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[1].vlanId }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[1].wlanId }}{% else %}N/A | N/A | N/A{% endif %} | {% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[2].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[2].ssid }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[2].vlanId }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[2].wlanId }}{% else %}N/A | N/A | N/A{% endif %} |"
+          with_subelements:
+            - "{{ AP_detail.results }}"
+            - json.queryResponse.entity
+          delegate_to: localhost
 
 # Format Markdown #
-    - name: Format Markdown File Commas to Pipes
-      replace:
-        path: ../documentation/PRIME/markdown/prime_AP_facts.md
-        regexp: ','
-        replace: ' | '
-      delegate_to: localhost
-      run_once: true 
+        - name: Format Markdown File Commas to Pipes
+          replace:
+            path: ../documentation/PRIME/markdown/prime_AP_facts.md
+            regexp: ','
+            replace: ' | '
+          delegate_to: localhost
+          run_once: true 
 
 # Create Mind Map # 
-    - name: create Summary Mind Map 
-      shell: "markmap --no-open ../documentation/PRIME/markdown/prime_AP_facts.md -o ../documentation/PRIME/mindmap/prime_AP_facts.html"
-      register: markmap    
-      delegate_to: localhost
-      run_once: true 
+        - name: create Summary Mind Map 
+          shell: "markmap --no-open ../documentation/PRIME/markdown/prime_AP_facts.md -o ../documentation/PRIME/mindmap/prime_AP_facts.html"
+          register: markmap    
+          delegate_to: localhost
+          run_once: true 
+      when: ansible_limit is not defined 
+
+# When Limit on Playbook
+
+    - name: Playbook Limited Make Separate Report for Limit Value
+      block: 
+
+# GET AP Entity ID #      
+        - name: GET AP Entity ID's
+          uri:
+            url: "{{ enterprise_defaults.servers.prime.protocol }}://{{ enterprise_defaults.servers.prime.address }}/webacs/api/v1/data/AccessPointDetails?cdpNeighbor.neighborName={{ inventory_hostname }}.hoc-lab-cdc.ca"
+            user: "{{ enterprise_defaults.servers.prime.api_user }}"
+            password: "{{ prime_password }}"
+            method: GET
+            return_content: yes
+            validate_certs: no
+            force_basic_auth: yes
+            follow_redirects: all
+          register: AP_id
+          delegate_to: localhost
+
+# Set AP Fact # 
+        - name: query xml
+          xml:
+            xmlstring: "{{AP_id.content}}"
+            xpath: /queryResponse/entityId
+            content: text
+          register: filtered_AP
+
+# Get AP Info using matching ID # 
+        - name: GET AP Details
+          uri:
+            url: "{{ enterprise_defaults.servers.prime.protocol }}://{{ enterprise_defaults.servers.prime.address }}//webacs/api/v1/data/AccessPointDetails/{{ item.entityId }}.json"
+            user: "{{ enterprise_defaults.servers.prime.api_user }}"
+            password: "{{ prime_password }}"
+            method: GET
+            return_content: yes
+            validate_certs: no
+            force_basic_auth: yes
+            follow_redirects: all
+          register: AP_detail
+          delegate_to: localhost
+          ignore_errors: true
+          with_items: "{{ filtered_AP.matches }}"
+
+# Create JSON file with Ansible Facts #
+        - name: Create raw JSON file
+          copy: 
+            content: | 
+              {% for host in ansible_play_hosts %}
+              {{ hostvars[host].AP_detail | to_nice_json }}
+              {% endfor %}
+            dest: ../documentation/PRIME/json/{{ ansible_limit}}.prime_AP_facts.json       
+          delegate_to: localhost
+          run_once: true 
+
+# Create YAML file with Ansible Facts #
+        - name: Create raw YAML file
+          copy: 
+            content: | 
+              {% for host in ansible_play_hosts %}
+              {{ hostvars[host].AP_detail | to_nice_yaml }}
+              {% endfor %}
+            dest: ../documentation/PRIME/yaml/{{ ansible_limit}}.prime_AP_facts.yml       
+          delegate_to: localhost
+          run_once: true 
+
+# Add Headers to YAML #
+        - name: Header Row
+          lineinfile:
+            path: ../documentation/PRIME/yaml/{{ ansible_limit}}.prime_AP_facts.yml
+            insertbefore: BOF
+            line: ---        
+          delegate_to: localhost
+
+# Add Create CSV with header row to CSV #
+        - name: Header Row
+          copy:
+            dest: ../documentation/PRIME/csv/{{ ansible_limit}}.prime_AP_facts.csv
+            content: "{{ item.property }}"
+          with_items:
+            - { property: 'Weekday,Date,Switch,Platform,Switch IP,Interface,Interface Speed,Interface Duplex,AP Name,AP Model,AP Group,AP Type,Type,AP Serial Number,AP Software,AP Admin Status,AP Reachability,AP Status,AP IP Address,AP Ethernet MAC,AP MAC,AP Location,AP Uptime,AP Client Count (Total),AP 2.4GHz Clients,AP 5GHz Clients,AP WIPS Enabled,AP CAPWAP Join Time,AP CAPWAP Uptime,AP Controller Name,AP Controller IP,AP FlexConnect Mode,AP Maintenance Mode,AP PoE Value,AP PoE Status,AP Rogue Detection,AP SSH Enabled,AP Telnet Enabled,AP WLAN 01 SSID,AP WLAN 01 SSID Broadcast,AP WLAN 01 Profile,AP WLAN 02 SSID,AP WLAN 02 SSID Broadcast,AP WLAN 02 Profile,AP WLAN 03 SSIDs,AP WLAN 03 SSID Broadcast,AP WLAN 03 Profile,AP WLAN 04 SSID,AP WLAN 04 SSID Broadcast,AP WLAN 04 Profile,AP WLAN 05 SSID,AP WLAN 05 SSID Broadcast,AP WLAN 05 Profile,AP WLAN 06 SSID,AP WLAN 06 SSID Broadcast,AP WLAN 06 Profile,AP WLAN 07 SSID,AP WLAN 07 SSID Broadcast,AP WLAN 07 Profile,AP WLAN 08 SSID,AP WLAN 08 SSID Broadcast,AP WLAN 08 Profile,AP WLAN01 Mapping SSID,AP WLAN01 Mapping VLAN ID,AP WLAN01 Mapping WLAN ID,AP WLAN02 Mapping SSID,AP WLAN02 Mapping VLAN ID,AP WLAN02 Mapping WLAN ID,AP WLAN03 Mapping SSID,AP WLAN03 Mapping VLAN ID,AP WLAN03 Mapping WLAN ID' }
+          delegate_to: localhost
+
+# Fill CSV file with results #
+        - name: Create CSV
+          lineinfile: 
+            create: yes
+            path: ../documentation/PRIME/csv/{{ ansible_limit}}.prime_AP_facts.csv  
+            line: "{{ item[0].date }},{{ item[1].accessPointDetailsDTO.cdpNeighbors.cdpNeighbor.neighborName }},{{ item[1].accessPointDetailsDTO.cdpNeighbors.cdpNeighbor.platform }},{{ item[1].accessPointDetailsDTO.cdpNeighbors.cdpNeighbor.neighborIpAddress }},{{ item[1].accessPointDetailsDTO.cdpNeighbors.cdpNeighbor.neighborPort }},{{ item[1].accessPointDetailsDTO.cdpNeighbors.cdpNeighbor.interfaceSpeed }},{{ item[1].accessPointDetailsDTO.cdpNeighbors.cdpNeighbor.duplex }},{{ item[1].accessPointDetailsDTO.name }},{{ item[1].accessPointDetailsDTO.model }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.apGroupName }},{{ item[1].accessPointDetailsDTO.apType }},{{ item[1].accessPointDetailsDTO.type }},{{ item[1].accessPointDetailsDTO.serialNumber }},{{ item[1].accessPointDetailsDTO.softwareVersion }},{{ item[1].accessPointDetailsDTO.adminStatus }},{{ item[1].accessPointDetailsDTO.reachabilityStatus }},{{ item[1].accessPointDetailsDTO.status }},{{ item[1].accessPointDetailsDTO.ipAddress }},{{ item[1].accessPointDetailsDTO.ethernetMac }},{{ item[1].accessPointDetailsDTO.macAddress }},{{ item[1].accessPointDetailsDTO.locationHeirarchy }},{% if item[1].accessPointDetailsDTO.upTime is defined %} {{ item[1].accessPointDetailsDTO.upTime }} {% else %} N/A {% endif %},{{ item[1].accessPointDetailsDTO.clientCount }},{{ item[1].accessPointDetailsDTO.clientCount_2_4GHz }},{{ item[1].accessPointDetailsDTO.clientCount_5GHz }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.WIPSEnabled }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.capwapJoinTakenTime }},{% if  item[1].accessPointDetailsDTO.unifiedApInfo.capwapUpTime is defined %} {{ item[1].accessPointDetailsDTO.unifiedApInfo.capwapUpTime }} {% else %} N/A {% endif %},{% if item[1].accessPointDetailsDTO.unifiedApInfo.controllerName is defined %} {{ item[1].accessPointDetailsDTO.unifiedApInfo.controllerName }} {% else %} N/A {% endif %},{% if item[1].accessPointDetailsDTO.unifiedApInfo.controllerIpAddress is defined %} {{ item[1].accessPointDetailsDTO.unifiedApInfo.controllerIpAddress }} {% else %} N/A {% endif %},{{ item[1].accessPointDetailsDTO.unifiedApInfo.flexConnectMode }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.maintenanceMode }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.poeStatus }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.poeStatusEnum }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.rogueDetectionEnabled }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.sshEnabled }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.telnetEnabled }},{% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[0].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[0].ssid }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[0].broadcastSsidEnabled }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[0].profileName }}{% else %}N/A,N/A,N/A{% endif %},{% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[1].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[1].ssid }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[1].broadcastSsidEnabled }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[1].profileName }}{% else %}N/A,N/A,N/A{% endif %},{% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[2].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[2].ssid }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[2].broadcastSsidEnabled }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[2].profileName }}{% else %}N/A,N/A,N/A{% endif %},{% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[3].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[3].ssid }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[3].broadcastSsidEnabled }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[3].profileName }}{% else %}N/A,N/A,N/A{% endif %},{% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[4].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[4].ssid }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[4].broadcastSsidEnabled }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[4].profileName }}{% else %}N/A,N/A,N/A{% endif %},{% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[5].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[5].ssid }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[5].broadcastSsidEnabled }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[5].profileName }}{% else %}N/A,N/A,N/A{% endif %},{% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[6].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[6].ssid }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[6].broadcastSsidEnabled }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[6].profileName }}{% else %}N/A,N/A,N/A{% endif %},{% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[7].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[7].ssid }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[7].broadcastSsidEnabled }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[7].profileName }}{% else %}N/A,N/A,N/A{% endif %},{% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[0].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[0].ssid }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[0].vlanId }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[0].wlanId }}{% else %}N/A,N/A,N/A{% endif %},{% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[0].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[1].ssid }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[1].vlanId }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[1].wlanId }}{% else %}N/A,N/A,N/A{% endif %},{% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[2].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[2].ssid }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[2].vlanId }},{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[2].wlanId }}{% else %}N/A,N/A,N/A{% endif %}"
+          with_subelements:
+            - "{{ AP_detail.results }}"
+            - json.queryResponse.entity
+          delegate_to: localhost
+
+# Add Create Markdown with header row to Markdown #
+        - name: Header Row
+          copy:
+            dest: ../documentation/PRIME/markdown/{{ ansible_limit}}.prime_AP_facts.md
+            content: "{{ item.property }}"
+          with_items:
+            - { property: '| ------- | ---- | ------ | -------- | --------- | --------- | --------------- | ---------------- | ------- | -------- | -------- | ------- | ---- | ---------------- | ----------- | --------------- | --------------- | --------- | ------------- | --------------- | ------ | ----------- | --------- | ----------------------- | ----------------- | --------------- | --------------- | ------------------- | ---------------- | ------------------ | ---------------- | ------------------- | ------------------- | ------------ | ------------- | ------------------ | -------------- | ----------------- | --------------- | ------------------------- | ------------------ | --------------- | ------------------------- | ------------------ |  --------------- | ------------------------- | ------------------ |  -------------- | ------------------------- | ------------------ |  -------------- | ------------------------- | ------------------ | --------------- | ------------------------- | ------------------ | --------------- | ------------------------- | ------------------ | --------------- | ------------------------- | ------------------ |' }
+          delegate_to: localhost
+
+# Add table headers to Markdown
+        - name: Table Headers
+          lineinfile:
+            path: ../documentation/PRIME/markdown/{{ ansible_limit}}.prime_AP_facts.md
+            insertbefore: BOF
+            line: "{{ item.property }}"
+            state: present
+          with_items:
+            - { property: '| Weekday | Date | Switch | Platform | Switch IP | Interface | Interface Speed | Interface Duplex | AP Name | AP Model | AP Group | AP Type | Type | AP Serial Number | AP Software | AP Admin Status | AP Reachability | AP Status | AP IP Address | AP Ethernet MAC | AP MAC | AP Location | AP Uptime | AP Client Count (Total) | AP 2.4GHz Clients | AP 5GHz Clients | AP WIPS Enabled | AP CAPWAP Join Time | AP CAPWAP Uptime | AP Controller Name | AP Controller IP | AP FlexConnect Mode | AP Maintenance Mode | AP PoE Value | AP PoE Status | AP Rogue Detection | AP SSH Enabled | AP Telnet Enabled | AP WLAN 01 SSID | AP WLAN 01 SSID Broadcast | AP WLAN 01 Profile | AP WLAN 02 SSID | AP WLAN 02 SSID Broadcast | AP WLAN 02 Profile | AP WLAN 03 SSIDs | AP WLAN 03 SSID Broadcast | AP WLAN 03 Profile | AP WLAN 04 SSID | AP WLAN 04 SSID Broadcast | AP WLAN 04 Profile | AP WLAN 05 SSID | AP WLAN 05 SSID Broadcast | AP WLAN 05 Profile | AP WLAN 06 SSID | AP WLAN 06 SSID Broadcast | AP WLAN 06 Profile | AP WLAN 07 SSID | AP WLAN 07 SSID Broadcast | AP WLAN 07 Profile | AP WLAN 08 SSID | AP WLAN 08 SSID Broadcast | AP WLAN 08 Profile |' }
+            - { property: '# Cisco Prime AP Details' }
+          delegate_to: localhost
+
+# Fill Markdown file with results #
+        - name: Create Markdown
+          lineinfile: 
+            create: yes
+            path: ../documentation/PRIME/markdown/{{ ansible_limit}}.prime_AP_facts.md
+            line: "| {{ item[0].date }} | {{ item[1].accessPointDetailsDTO.cdpNeighbors.cdpNeighbor.neighborName }} | {{ item[1].accessPointDetailsDTO.cdpNeighbors.cdpNeighbor.platform }} | {{ item[1].accessPointDetailsDTO.cdpNeighbors.cdpNeighbor.neighborIpAddress }} | {{ item[1].accessPointDetailsDTO.cdpNeighbors.cdpNeighbor.neighborPort }} | {{ item[1].accessPointDetailsDTO.cdpNeighbors.cdpNeighbor.interfaceSpeed }} | {{ item[1].accessPointDetailsDTO.cdpNeighbors.cdpNeighbor.duplex }} | {{ item[1].accessPointDetailsDTO.name }} | {{ item[1].accessPointDetailsDTO.model }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.apGroupName }} | {{ item[1].accessPointDetailsDTO.apType }} | {{ item[1].accessPointDetailsDTO.type }} | {{ item[1].accessPointDetailsDTO.serialNumber }} | {{ item[1].accessPointDetailsDTO.softwareVersion }} | {{ item[1].accessPointDetailsDTO.adminStatus }} | {{ item[1].accessPointDetailsDTO.reachabilityStatus }} | {{ item[1].accessPointDetailsDTO.status }} | {{ item[1].accessPointDetailsDTO.ipAddress }} | {{ item[1].accessPointDetailsDTO.ethernetMac }} | {{ item[1].accessPointDetailsDTO.macAddress }} | {{ item[1].accessPointDetailsDTO.locationHeirarchy }} | {% if item[1].accessPointDetailsDTO.upTime is defined %} {{ item[1].accessPointDetailsDTO.upTime }} {% else %} N/A {% endif %} | {{ item[1].accessPointDetailsDTO.clientCount }} | {{ item[1].accessPointDetailsDTO.clientCount_2_4GHz }} | {{ item[1].accessPointDetailsDTO.clientCount_5GHz }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.WIPSEnabled }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.capwapJoinTakenTime }} | {% if  item[1].accessPointDetailsDTO.unifiedApInfo.capwapUpTime is defined %} {{ item[1].accessPointDetailsDTO.unifiedApInfo.capwapUpTime }} {% else %} N/A {% endif %} | {% if item[1].accessPointDetailsDTO.unifiedApInfo.controllerName is defined %} {{ item[1].accessPointDetailsDTO.unifiedApInfo.controllerName }} {% else %} N/A {% endif %} | {% if item[1].accessPointDetailsDTO.unifiedApInfo.controllerIpAddress is defined %} {{ item[1].accessPointDetailsDTO.unifiedApInfo.controllerIpAddress }} {% else %} N/A {% endif %} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.flexConnectMode }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.maintenanceMode }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.poeStatus }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.poeStatusEnum }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.rogueDetectionEnabled }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.sshEnabled }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.telnetEnabled }} | {% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[0].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[0].ssid }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[0].broadcastSsidEnabled }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[0].profileName }}{% else %}N/A | N/A | N/A{% endif %} | {% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[1].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[1].ssid }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[1].broadcastSsidEnabled }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[1].profileName }}{% else %}N/A | N/A | N/A{% endif %} | {% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[2].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[2].ssid }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[2].broadcastSsidEnabled }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[2].profileName }}{% else %}N/A | N/A | N/A{% endif %} | {% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[3].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[3].ssid }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[3].broadcastSsidEnabled }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[3].profileName }}{% else %}N/A | N/A | N/A{% endif %} | {% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[4].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[4].ssid }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[4].broadcastSsidEnabled }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[4].profileName }}{% else %}N/A | N/A | N/A{% endif %} | {% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[5].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[5].ssid }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[5].broadcastSsidEnabled }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[5].profileName }}{% else %}N/A | N/A | N/A{% endif %} | {% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[6].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[6].ssid }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[6].broadcastSsidEnabled }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[6].profileName }}{% else %}N/A | N/A | N/A{% endif %} | {% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[7].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[7].ssid }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[7].broadcastSsidEnabled }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanProfiles.wlanProfile[7].profileName }}{% else %}N/A | N/A | N/A{% endif %} | {% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[0].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[0].ssid }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[0].vlanId }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[0].wlanId }}{% else %}N/A | N/A | N/A{% endif %} | {% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[0].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[1].ssid }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[1].vlanId }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[1].wlanId }}{% else %}N/A | N/A | N/A{% endif %} | {% if item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[2].ssid is defined %}{{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[2].ssid }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[2].vlanId }} | {{ item[1].accessPointDetailsDTO.unifiedApInfo.wlanVlanMappings.wlanVlanMapping[2].wlanId }}{% else %}N/A | N/A | N/A{% endif %} |"
+          with_subelements:
+            - "{{ AP_detail.results }}"
+            - json.queryResponse.entity
+          delegate_to: localhost
+
+# Format Markdown #
+        - name: Format Markdown File Commas to Pipes
+          replace:
+            path: ../documentation/PRIME/markdown/{{ ansible_limit}}.prime_AP_facts.md
+            regexp: ','
+            replace: ' | '
+          delegate_to: localhost
+          run_once: true 
+
+# Create Mind Map # 
+        - name: create Summary Mind Map 
+          shell: "markmap --no-open ../documentation/PRIME/markdown/{{ ansible_limit}}.prime_AP_facts.md -o ../documentation/PRIME/mindmap/{{ ansible_limit}}.prime_AP_facts.html"
+          register: markmap    
+          delegate_to: localhost
+          run_once: true 
+      when: ansible_limit is defined 
 
 # Git Add / Commit / Push#
 - hosts: localhost
