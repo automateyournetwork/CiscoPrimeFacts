@@ -147,6 +147,10 @@ sudo ln -s /bin/true /usr/bin/sleep
 
 ### Enable the Cisco Prime API
 
+Enable Read access for a Prime User
+
+![image](./images/EnableNBI.png)
+
 ### Modify the group_vars\ENTERPRISE.yml
 
 Update the base URL variable to be your Cisco Prime appliance URL
@@ -169,13 +173,29 @@ Adjust the scope of your play in the playbooks\CiscoPrimeDeviceFacts.yml to targ
 
 cd CiscoPrimeFacts/playbooks
 
-### All Hosts in CAMPUS_WAN group
+### Device Facts - All Hosts in CAMPUS_WAN group
 
 ansible-playbook CiscoPrimeDeviceFacts.yml
 
-### Limited Group or Host
+### Device Facts - Limited Group or Host
 
 ansible-playbook ansible-playbook CiscoPrimeDeviceFacts.yml --limit "hostname or groupname"
+
+### AP Facts - All Hosts in ACCESS_WAN
+
+ansible-playbook CiscoPrimeAPFacts.yml
+
+### AP Facts - Limited Group or Host
+
+ansible-playbook ansible-playbook CiscoPrimeAPFacts.yml --limit "hostname or groupname"
+
+## Common Errors
+
+Host not in Prime:
+fatal: [{{inventory_hostname}}]: FAILED! => {"msg": "The task includes an option with an undefined variable. The error was: 'dict object' has no attribute 'entityId'\n\nThe error appears to be in '/home/usr/Prod-Infrastructure/playbooks/prime/CiscoPrimeDeviceFacts.yml': line 33, column 7, but may\nbe elsewhere in the file depending on the exact syntax problem.\n\nThe offending line appears to be:\n\n# Set Device Fact #\n    - name: Set Device Fact\n      ^ here\n"}
+
+Host does not have Access Points:
+fatal: [{{inventory_hostname}}]: FAILED! => {"ansible_facts": {"discovered_interpreter_python": "/usr/bin/python"}, "changed": false, "msg": "Xpath /queryResponse/entityId does not reference a node!"}
 
 ## Review the reports
 
