@@ -23,7 +23,7 @@
 # GET AP Entity ID #      
         - name: GET AP Entity ID's
           uri:
-            url: "{{ enterprise_defaults.servers.prime.protocol }}://{{ enterprise_defaults.servers.prime.address }}/webacs/api/v1/data/AccessPointDetails?cdpNeighbor.neighborName={{ inventory_hostname }}.hoc-lab-cdc.ca"
+            url: "{{ enterprise_defaults.servers.prime.protocol }}://{{ enterprise_defaults.servers.prime.address }}/webacs/api/v1/data/AccessPointDetails?cdpNeighbor.neighborName={{ inventory_hostname }}"
             user: "{{ enterprise_defaults.servers.prime.api_user }}"
             password: "{{ prime_password }}"
             method: GET
@@ -165,7 +165,7 @@
 # GET AP Entity ID #      
         - name: GET AP Entity ID's
           uri:
-            url: "{{ enterprise_defaults.servers.prime.protocol }}://{{ enterprise_defaults.servers.prime.address }}/webacs/api/v1/data/AccessPointDetails?cdpNeighbor.neighborName={{ inventory_hostname }}.hoc-lab-cdc.ca"
+            url: "{{ enterprise_defaults.servers.prime.protocol }}://{{ enterprise_defaults.servers.prime.address }}/webacs/api/v1/data/AccessPointDetails?cdpNeighbor.neighborName={{ inventory_hostname }}"
             user: "{{ enterprise_defaults.servers.prime.api_user }}"
             password: "{{ prime_password }}"
             method: GET
